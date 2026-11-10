@@ -4,7 +4,7 @@ import {
   LayoutDashboard, CalendarDays, Users, LogOut, 
   Search, TrendingUp, Clock, Wallet, MapPin, Plus, AlertCircle, Send, CheckCircle2, 
   Paperclip, Loader2, History, ChevronLeft, ChevronRight, Calendar as CalendarIcon,
-  ArrowRight, ShieldCheck
+  ArrowRight, ShieldCheck, MessageCircle, Sparkles, Star, Tag
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
@@ -824,19 +824,289 @@ function CalendarView() {
   );
 }
 
-// --- 6. VISTA: CLIENTES ---
-function ClientsView() { 
+// --- 6. VISTA: DIRECTORIO & CRM DE CLIENTES (MOCKUP INTERACTIVO PARA PRESENTACIÓN) ---
+function ClientsView() {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedSegment, setSelectedSegment] = useState<'Todos' | 'VIP' | 'Frecuente' | 'Inactivo'>('Todos');
+  const [promoModalClient, setPromoModalClient] = useState<any | null>(null);
+
+  // Métricas globales del CRM
+  const crmMetrics = [
+    { title: "Jugadores Registrados", value: "148", change: "+14 este mes", icon: Users, color: "text-indigo-600", bg: "bg-indigo-50" },
+    { title: "Clientes VIP / Frecuentes", value: "38", change: "25.6% del total", icon: Star, color: "text-amber-500", bg: "bg-amber-50" },
+    { title: "Gasto Promedio (LTV)", value: "$76.400", change: "+8% vs sem. pasada", icon: Wallet, color: "text-emerald-600", bg: "bg-emerald-50" },
+    { title: "Retorno Campañas WhatsApp", value: "88%", change: "19 reservas reactivadas", icon: MessageCircle, color: "text-emerald-500", bg: "bg-emerald-50" }
+  ];
+
+  // Base de datos de demostración
+  const clientData = [
+    { id: '1', name: 'Paula Muñoz', phone: '+56 9 7385 7123', totalBookings: 16, totalSpent: 384000, lastVisit: 'Hoy', preferredCourt: 'Cancha 1 (Techada)', category: 'VIP', attendanceRate: '100%' },
+    { id: '2', name: 'Pamela Venegas Moya', phone: '+56 9 7107 0176', totalBookings: 11, totalSpent: 264000, lastVisit: 'Ayer', preferredCourt: 'Cancha 1 (Techada)', category: 'VIP', attendanceRate: '92%' },
+    { id: '3', name: 'Diego Muñoz Venegas', phone: '+56 9 7376 4805', totalBookings: 8, totalSpent: 192000, lastVisit: 'Hace 3 días', preferredCourt: 'Cancha 2 (Sintético)', category: 'Frecuente', attendanceRate: '88%' },
+    { id: '4', name: 'Cristóbal Silva', phone: '+56 9 8452 1190', totalBookings: 6, totalSpent: 132000, lastVisit: 'Hace 5 días', preferredCourt: 'Cancha 2 (Sintético)', category: 'Frecuente', attendanceRate: '83%' },
+    { id: '5', name: 'Matías Fernández', phone: '+56 9 9123 4455', totalBookings: 2, totalSpent: 48000, lastVisit: 'Hace 22 días', preferredCourt: 'Cancha 1 (Techada)', category: 'Inactivo', attendanceRate: '66%' },
+    { id: '6', name: 'Lucas Contreras', phone: '+56 9 6554 3321', totalBookings: 1, totalSpent: 22000, lastVisit: 'Hace 30 días', preferredCourt: 'Cancha 2 (Sintético)', category: 'Inactivo', attendanceRate: '50%' },
+  ];
+
+  const filteredClients = clientData.filter(client => {
+    const matchesSearch = client.name.toLowerCase().includes(searchTerm.toLowerCase()) || client.phone.includes(searchTerm);
+    const matchesSegment = selectedSegment === 'Todos' || client.category === selectedSegment;
+    return matchesSearch && matchesSegment;
+  });
+
+  const getCategoryBadge = (category: string) => {
+    switch (category) {
+      case 'VIP':
+        return <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-amber-100 text-amber-800 border border-amber-200 flex items-center gap-1 w-fit"><Star className="w-3 h-3 fill-amber-500 text-amber-500" /> VIP Oro</span>;
+      case 'Frecuente':
+        return <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-100 text-indigo-800 border border-indigo-200 w-fit">Frecuente</span>;
+      case 'Inactivo':
+        return <span className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200 w-fit">Reactivar</span>;
+      default:
+        return <span>{category}</span>;
+    }
+  };
+
+  const handleSendCustomPromo = (client: any, templateType: 'descuento' | 'agradecimiento' | 'reactivacion') => {
+    let msg = '';
+    const phoneClean = client.phone.replace(/\D/g, '');
+
+    if (templateType === 'descuento') {
+      msg = `⚽ ¡Hola ${client.name}! En Canchas Los Robles premiamos tu fidelidad como cliente VIP.\n\n🔥 Este jueves tienes un *15% OFF* en tu horario habitual en ${client.preferredCourt}.\n\n¿Te reservamos el turno antes de que se libere?`;
+    } else if (templateType === 'reactivacion') {
+      msg = `⚽ ¡Hola ${client.name}! Hace días no te vemos por las canchas.\n\n¡Arma el partido con tus amigos! Te regalamos un *20% OFF* o *1 balón de regalo* para tu próxima reserva este fin de semana.`;
+    } else {
+      msg = `👋 Hola ${client.name}, gracias por jugar con nosotros en Canchas Los Robles. ¿Todo en orden con tu última reserva? Si necesitas fijar un horario semanal fijo avísanos por acá.`;
+    }
+
+    window.open(`https://wa.me/${phoneClean}?text=${encodeURIComponent(msg)}`, '_blank');
+    setPromoModalClient(null);
+  };
+
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Directorio de Clientes</h1>
-        <p className="text-slate-500 text-xs sm:text-sm mt-0.5">Gestión de deportistas frecuentes.</p>
+    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
+      {/* 1. Cabecera con selector de acción */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Directorio & CRM de Clientes</h1>
+            <span className="px-2.5 py-0.5 rounded-md bg-indigo-100 text-indigo-700 font-extrabold text-[10px] tracking-wide uppercase">
+              Módulo CRM
+            </span>
+          </div>
+          <p className="text-slate-500 text-xs sm:text-sm mt-0.5">Historial de consumo acumulado, fidelización y campañas de WhatsApp.</p>
+        </div>
       </div>
-      <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-400 text-sm">
-        Próximo módulo CRM: métricas por jugador, historial acumulado de pagos y promociones por WhatsApp.
+
+      {/* 2. Tarjetas de Métricas de Retención */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {crmMetrics.map((metric, i) => (
+          <div key={i} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+            <div className="space-y-1">
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{metric.title}</p>
+              <h3 className="text-2xl font-extrabold text-slate-900">{metric.value}</h3>
+              <p className="text-xs font-semibold text-emerald-600">{metric.change}</p>
+            </div>
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${metric.bg}`}>
+              <metric.icon className={`w-6 h-6 ${metric.color}`} />
+            </div>
+          </div>
+        ))}
       </div>
+
+      {/* 3. Panel Promocional: Campañas de WhatsApp Rápidas */}
+      <div className="bg-gradient-to-br from-indigo-900 via-indigo-950 to-slate-900 rounded-2xl p-5 sm:p-6 text-white shadow-md relative overflow-hidden border border-indigo-800">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div className="space-y-1.5 max-w-xl">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">Marketing Automatizado</span>
+            </div>
+            <h2 className="text-lg sm:text-xl font-bold">Lanza promociones segmentadas por WhatsApp</h2>
+            <p className="text-xs sm:text-sm text-slate-300">
+              Reactiva jugadores inactivos, llena horarios libres de baja ocupación y recompensa a los clientes que más gastan en el recinto.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2.5">
+            <button 
+              onClick={() => setSelectedSegment('Inactivo')}
+              className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-bold backdrop-blur-md transition flex items-center gap-2"
+            >
+              <MessageCircle className="w-4 h-4 text-emerald-400" />
+              Reactivar Inactivos (2)
+            </button>
+            <button 
+              onClick={() => setSelectedSegment('VIP')}
+              className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-md shadow-indigo-600/30 transition flex items-center gap-2"
+            >
+              <Star className="w-4 h-4 text-amber-300 fill-amber-300" />
+              Beneficios VIP Oro
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. Tabla y Filtros del Directorio */}
+      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
+        {/* Barra de Filtros */}
+        <div className="p-4 sm:p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center bg-slate-100 px-3 py-2 rounded-xl w-full sm:w-72">
+            <Search className="w-4 h-4 text-slate-400 mr-2 shrink-0" />
+            <input 
+              type="text" 
+              placeholder="Buscar por nombre o teléfono..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="bg-transparent border-none outline-none text-xs sm:text-sm w-full text-slate-800 placeholder-slate-400"
+            />
+          </div>
+
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+            {(['Todos', 'VIP', 'Frecuente', 'Inactivo'] as const).map(segment => (
+              <button
+                key={segment}
+                onClick={() => setSelectedSegment(segment)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap ${
+                  selectedSegment === segment 
+                    ? 'bg-slate-900 text-white shadow-xs' 
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                {segment}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Tabla Responsiva */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs sm:text-sm border-collapse min-w-[700px]">
+            <thead className="bg-slate-50/75 border-b border-slate-200 text-slate-500 text-[11px] uppercase tracking-wider font-semibold">
+              <tr>
+                <th className="p-3.5 sm:p-4">Jugador</th>
+                <th className="p-3.5 sm:p-4">Categoría</th>
+                <th className="p-3.5 sm:p-4 text-center">Partidos</th>
+                <th className="p-3.5 sm:p-4">Total Invertido</th>
+                <th className="p-3.5 sm:p-4">Última Visita</th>
+                <th className="p-3.5 sm:p-4 text-right">Contacto & Promos</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {filteredClients.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="p-8 text-center text-slate-400 text-xs sm:text-sm">
+                    No se encontraron clientes con el filtro aplicado.
+                  </td>
+                </tr>
+              ) : (
+                filteredClients.map(client => (
+                  <tr key={client.id} className="hover:bg-slate-50 transition">
+                    <td className="p-3.5 sm:p-4">
+                      <p className="font-bold text-slate-900">{client.name}</p>
+                      <p className="text-xs text-slate-400 font-mono mt-0.5">{client.phone}</p>
+                    </td>
+                    <td className="p-3.5 sm:p-4">
+                      {getCategoryBadge(client.category)}
+                    </td>
+                    <td className="p-3.5 sm:p-4 text-center font-bold text-slate-800">
+                      {client.totalBookings}
+                    </td>
+                    <td className="p-3.5 sm:p-4">
+                      <p className="font-extrabold text-slate-900">${client.totalSpent.toLocaleString('es-CL')}</p>
+                      <span className="text-[10px] text-slate-400">Prom. ${(client.totalSpent / client.totalBookings).toLocaleString('es-CL')}/turno</span>
+                    </td>
+                    <td className="p-3.5 sm:p-4">
+                      <span className="font-medium text-slate-700">{client.lastVisit}</span>
+                      <span className="text-[10px] text-slate-400 block truncate max-w-[140px]">{client.preferredCourt}</span>
+                    </td>
+                    <td className="p-3.5 sm:p-4 text-right">
+                      <button
+                        onClick={() => setPromoModalClient(client)}
+                        className="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold transition inline-flex items-center gap-1.5 shadow-xs"
+                      >
+                        <MessageCircle className="w-3.5 h-3.5 text-emerald-600 fill-emerald-600" />
+                        <span>Promo WhatsApp</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* 5. Modal de Envío de Promoción Personalizada */}
+      {promoModalClient && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white p-5 sm:p-6 rounded-2xl w-full max-w-md shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-150">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">Enviar Promoción por WhatsApp</h3>
+                <p className="text-xs text-slate-500 mt-0.5">Destinatario: <strong className="text-slate-800">{promoModalClient.name}</strong></p>
+                <p className="text-[11px] text-slate-400 font-mono">{promoModalClient.phone}</p>
+              </div>
+              {getCategoryBadge(promoModalClient.category)}
+            </div>
+
+            <div className="space-y-3 mb-6">
+              <p className="text-xs font-bold text-slate-700">Selecciona la plantilla de mensaje:</p>
+
+              <button
+                onClick={() => handleSendCustomPromo(promoModalClient, 'descuento')}
+                className="w-full p-3 rounded-xl border border-indigo-200 bg-indigo-50/50 hover:bg-indigo-50 text-left transition group"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-bold text-indigo-950 flex items-center gap-1.5">
+                    <Tag className="w-3.5 h-3.5 text-indigo-600" /> Descuento VIP de Fidelización
+                  </span>
+                  <span className="text-[10px] font-bold text-indigo-600">15% OFF</span>
+                </div>
+                <p className="text-[11px] text-slate-600 leading-relaxed">
+                  Ofrece 15% de descuento exclusivo en su cancha favorita ({promoModalClient.preferredCourt}).
+                </p>
+              </button>
+
+              <button
+                onClick={() => handleSendCustomPromo(promoModalClient, 'reactivacion')}
+                className="w-full p-3 rounded-xl border border-amber-200 bg-amber-50/50 hover:bg-amber-50 text-left transition group"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-bold text-amber-950 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-600" /> Reactivación de Partidos
+                  </span>
+                  <span className="text-[10px] font-bold text-amber-700">Balón / Dcto</span>
+                </div>
+                <p className="text-[11px] text-slate-600 leading-relaxed">
+                  Invita a volver a jugar con incentivo de balón gratis o 20% de descuento.
+                </p>
+              </button>
+
+              <button
+                onClick={() => handleSendCustomPromo(promoModalClient, 'agradecimiento')}
+                className="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-left transition"
+              >
+                <span className="text-xs font-bold text-slate-800 block mb-0.5">Encuesta rápida / Horario Fijo</span>
+                <p className="text-[11px] text-slate-500">
+                  Pregunta cómo estuvo la experiencia y ofrece bloquear un turno fijo semanal.
+                </p>
+              </button>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                onClick={() => setPromoModalClient(null)}
+                className="px-4 py-2 text-xs font-semibold text-slate-500 hover:text-slate-800 transition"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  ); 
+  );
 }
 
 // --- 7. VISTA B2C: PORTAL PÚBLICO (CON COMPROBANTE OBLIGATORIO) ---
