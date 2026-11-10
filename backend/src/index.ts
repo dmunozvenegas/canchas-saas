@@ -100,33 +100,47 @@ app.get('/api/history', async (req, res) => {
 // Crear reserva inicial con desglose de pago
 app.post('/api/bookings', async (req, res) => {
   try {
-    const { fieldId, clientName, clientPhone, date, timeSlot, paymentMethod, totalPrice, paidAmount } = req.body;
-    
-    const total = Number(totalPrice) || 25000;
-    const paid = Number(paidAmount) || 0;
-    
-    let status = 'Pendiente';
-    if (paid >= total) status = 'Pagado';
-    else if (paid > 0) status = 'Abono';
+    const { 
+      fieldId, clientName, clientPhone, date, timeSlot, 
+      totalPrice, paidAmount, paymentMethod, status 
+    } = req.body;
 
-    const inserted = await db.insert(bookings).values({
+    // 1. VALIDACIÓN PREVIA: Comprobar si la cancha ya está tomada
+    const collision = await db.select().from(bookings).where(
+      and(
+        eq(bookings.fieldId, fieldId),
+        eq(bookings.date, date),
+        eq(bookings.timeSlot, timeSlot),
+        ne(bookings.status, 'Anulado') // Solo choca si está 'Pendiente' o 'Pagado'
+      )
+    );
+
+    // Si ya existe una reserva activa, rechazamos la petición
+    if (collision.length > 0) {
+      return res.status(409).json({ 
+        error: '¡Horario no disponible! Esta cancha acaba de ser reservada por otro jugador.' 
+      });
+    }
+
+    // 2. Si está libre, se genera la reserva
+    const newBooking = await db.insert(bookings).values({
       fieldId,
       clientName,
       clientPhone,
       date,
       timeSlot,
-      status,
-      paymentMethod: paymentMethod || 'Efectivo',
-      totalPrice: total,
-      paidAmount: paid,
+      totalPrice,
+      paidAmount: paidAmount || 0,
+      paymentMethod: paymentMethod || 'Transferencia',
+      status: status || 'Pendiente'
     }).returning();
 
-    res.json(inserted[0]);
+    res.status(201).json(newBooking[0]);
   } catch (error) {
-    res.status(500).json({ error: 'Error al registrar reserva' });
+    console.error('Error al registrar reserva:', error);
+    res.status(500).json({ error: 'Error interno al procesar la reserva' });
   }
 });
-
 // Liquidar o registrar un abono adicional
 app.patch('/api/bookings/:id/pay', async (req, res) => {
   try {

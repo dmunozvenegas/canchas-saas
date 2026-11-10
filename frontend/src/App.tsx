@@ -765,15 +765,19 @@ function ClientsView() {
   ); 
 }
 
-// --- 7. VISTA B2C: PORTAL PÚBLICO (AMBIENTADO CON ESTADIO Y GLASSMORPHISM) ---
+// --- 7. VISTA B2C: PORTAL PÚBLICO (CON COMPROBANTE OBLIGATORIO) ---
 function PublicPortal() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  });
   const [selectedSlot, setSelectedSlot] = useState<any>(null);
   const [formData, setFormData] = useState({ name: '', phone: '' });
+  const [receiptFile, setReceiptFile] = useState<File | null>(null); // Estado para el comprobante
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Generación de 7 días sin desfase UTC
+  // 7 días sin desfase UTC
   const weekDays = useMemo(() => {
     return Array.from({ length: 7 }).map((_, i) => {
       const d = new Date();
@@ -826,7 +830,7 @@ function PublicPortal() {
     if (!selectedSlot) return;
     setIsSubmitting(true);
     try {
-      await fetch(`${API_BASE_URL}/api/bookings`, {
+      const res = await fetch(`${API_BASE_URL}/api/bookings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -841,13 +845,42 @@ function PublicPortal() {
           status: 'Pendiente'
         }),
       });
+
+      // Si otro usuario se adelantó mientras llenaba el formulario
+      if (res.status === 409) {
+        const errorData = await res.json();
+        alert(errorData.error || 'Lo sentimos, este turno acaba de ser tomado por otra persona.');
+        refetch(); // Refrescar turnos ocupados
+        setStep(1); // Volver a la grilla
+        setSelectedSlot(null);
+        return;
+      }
+
+      if (!res.ok) throw new Error('Error al procesar reserva');
+
       refetch();
       setStep(3);
     } catch {
-      alert('Error al agendar.');
+      alert('Error de conexión al agendar. Intenta nuevamente.');
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleOpenWhatsApp = () => {
+    if (!receiptFile || !selectedSlot) return;
+    const msg = encodeURIComponent(
+      `⚽ ¡Hola! Acabo de reservar en su portal web.\n\n` +
+      `📌 *Detalles de la Reserva:*\n` +
+      `• *Cancha:* ${selectedSlot.field}\n` +
+      `• *Fecha:* ${selectedDate}\n` +
+      `• *Horario:* ${selectedSlot.time}\n` +
+      `• *Titular:* ${formData.name}\n` +
+      `• *Total:* $${selectedSlot.price.toLocaleString('es-CL')}\n\n` +
+      `📎 *Comprobante adjunto:* ${receiptFile.name}\n` +
+      `(Te adjunto la imagen del comprobante a continuación)`
+    );
+    window.open(`https://wa.me/569XXXXXXXX?text=${msg}`, '_blank');
   };
 
   if (loadingFields) {
@@ -861,7 +894,7 @@ function PublicPortal() {
 
   return (
     <div className="min-h-screen relative flex flex-col items-center justify-center py-8 sm:py-14 px-4 overflow-x-hidden">
-      {/* 1. Fondo fotográfico con overlay de iluminación nocturna */}
+      {/* Fondo con imagen deportiva y overlay */}
       <div 
         className="fixed inset-0 bg-cover bg-center bg-no-repeat -z-10 scale-105 transform transition duration-1000"
         style={{
@@ -871,7 +904,7 @@ function PublicPortal() {
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950/85 via-slate-900/75 to-slate-950/95 backdrop-blur-[1px]" />
       </div>
 
-      {/* 2. Cabecera con identidad visual */}
+      {/* Cabecera */}
       <div className="max-w-xl w-full text-center mb-6 sm:mb-8 relative z-10 animate-in fade-in slide-in-from-top-4 duration-500">
         <div className="w-14 h-14 bg-indigo-600/90 backdrop-blur-md rounded-2xl mx-auto flex items-center justify-center mb-3 shadow-xl ring-4 ring-white/10">
           <MapPin className="text-white w-7 h-7" />
@@ -885,8 +918,8 @@ function PublicPortal() {
         </div>
       </div>
 
-      {/* 3. Tarjeta Principal con efecto Glassmorphism */}
-      <div className="max-w-xl w-full bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 overflow-hidden p-5 sm:p-8 relative z-10 transition-all">
+      {/* Tarjeta Principal */}
+      <div className="max-w-xl w-full bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 overflow-hidden p-5 sm:p-8 relative z-10">
         {step === 1 && (
           <>
             <h2 className="font-bold text-slate-800 text-sm sm:text-base mb-3 flex items-center gap-2">
@@ -918,7 +951,7 @@ function PublicPortal() {
             
             {visibleSlots.length === 0 ? (
                <div className="p-8 text-center text-slate-500 bg-slate-50/70 rounded-2xl border border-dashed border-slate-300 text-sm">
-                 No hay canchas disponibles para esta fecha. Selecciona otro día.
+                 No hay canchas disponibles para esta fecha.
                </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -995,27 +1028,106 @@ function PublicPortal() {
                 disabled={isSubmitting} 
                 className="w-full py-3.5 mt-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl disabled:opacity-50 transition shadow-md shadow-indigo-600/20"
               >
-                {isSubmitting ? 'Procesando...' : 'Bloquear Cancha e ir a Pagar'}
+                {isSubmitting ? 'Procesando...' : 'Bloquear Cancha y Pagar'}
               </button>
             </form>
           </div>
         )}
         
         {step === 3 && (
-          <div className="text-center py-4 max-w-md mx-auto">
-            <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-3" />
-            <h2 className="text-lg sm:text-xl font-bold text-slate-900">¡Cancha bloqueada!</h2>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1.5 mb-6">
-              Tienes <strong>30 minutos</strong> para transferir a la Cuenta RUT 12.345.678-9.
-            </p>
-            <a 
-              href={`https://wa.me/56973764805?text=${encodeURIComponent(`⚽ Hola! Acabo de reservar en el portal.\n\n*Cancha:* ${selectedSlot.field}\n*Fecha:* ${selectedDate}\n*Horario:* ${selectedSlot.time}\n*A nombre de:* ${formData.name}\n\nAdjunto el comprobante.`)}`} 
-              target="_blank" 
-              rel="noreferrer" 
-              className="flex justify-center items-center gap-2 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-md shadow-emerald-500/20 transition text-sm"
+          <div className="max-w-md mx-auto text-left animate-in fade-in zoom-in-95 duration-200">
+            <div className="text-center mb-5">
+              <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-2 text-amber-600">
+                <AlertCircle className="w-7 h-7" />
+              </div>
+              <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">¡Cancha Reservada Temporalmente!</h2>
+              <p className="text-xs text-slate-500 mt-1">
+                Tu turno está bloqueado por <strong>30 minutos</strong>. Realiza la transferencia y adjunta tu comprobante para confirmar.
+              </p>
+            </div>
+
+            {/* Datos de Transferencia */}
+            <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-4 mb-5 space-y-2 text-xs">
+              <div className="flex justify-between items-center pb-2 border-b border-slate-200">
+                <span className="font-semibold text-slate-500">Monto exacto a transferir:</span>
+                <span className="font-black text-indigo-600 text-sm">${selectedSlot?.price.toLocaleString('es-CL')}</span>
+              </div>
+              <div className="flex justify-between text-slate-700">
+                <span className="font-medium text-slate-500">Banco:</span>
+                <span className="font-bold">BancoEstado</span>
+              </div>
+              <div className="flex justify-between text-slate-700">
+                <span className="font-medium text-slate-500">Tipo de Cuenta:</span>
+                <span className="font-bold">CuentaRUT</span>
+              </div>
+              <div className="flex justify-between text-slate-700">
+                <span className="font-medium text-slate-500">Número de Cuenta / RUT:</span>
+                <span className="font-bold">12.345.678-9</span>
+              </div>
+              <div className="flex justify-between text-slate-700">
+                <span className="font-medium text-slate-500">Correo:</span>
+                <span className="font-bold">pagos@losrobles.cl</span>
+              </div>
+            </div>
+
+            {/* Área de Carga Obligatoria de Archivo */}
+            <div className="mb-5">
+              <label className="block text-xs font-bold text-slate-800 mb-2 flex items-center justify-between">
+                <span>Comprobante de Transferencia <span className="text-red-500">*</span></span>
+                <span className="text-[10px] text-slate-400 font-normal">JPG, PNG o PDF</span>
+              </label>
+
+              <label 
+                className={`flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-2xl cursor-pointer transition text-center ${
+                  receiptFile 
+                    ? 'border-emerald-500 bg-emerald-50/60 text-emerald-900' 
+                    : 'border-slate-300 hover:border-indigo-400 bg-slate-50/60 text-slate-600'
+                }`}
+              >
+                {receiptFile ? (
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                    <div className="text-left">
+                      <p className="font-bold text-xs truncate max-w-[220px]">{receiptFile.name}</p>
+                      <p className="text-[10px] text-emerald-700">Archivo cargado exitosamente. Clic para cambiar.</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-1.5 py-1">
+                    <Paperclip className="w-5 h-5 text-indigo-500" />
+                    <p className="text-xs font-bold text-slate-700">Subir comprobante o captura</p>
+                    <p className="text-[11px] text-slate-400">Toca aquí para seleccionar desde tu galería o archivos</p>
+                  </div>
+                )}
+                <input 
+                  type="file" 
+                  required
+                  accept="image/*,.pdf" 
+                  className="hidden" 
+                  onChange={(e) => setReceiptFile(e.target.files?.[0] || null)} 
+                />
+              </label>
+            </div>
+
+            {/* Botón de WhatsApp protegido */}
+            <button
+              onClick={handleOpenWhatsApp}
+              disabled={!receiptFile}
+              className={`w-full py-3.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition shadow-md ${
+                receiptFile 
+                  ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-500/20 cursor-pointer active:scale-[0.99]' 
+                  : 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300'
+              }`}
             >
-              <Send className="w-4 h-4"/> Enviar Comprobante
-            </a>
+              <Send className="w-4 h-4" />
+              {receiptFile ? 'Enviar y Validar Comprobante' : 'Adjunta el comprobante para continuar'}
+            </button>
+
+            {!receiptFile && (
+              <p className="text-[11px] text-center text-slate-400 mt-2">
+                Es necesario seleccionar el comprobante para habilitar el botón.
+              </p>
+            )}
           </div>
         )}
       </div>
