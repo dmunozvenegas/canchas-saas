@@ -883,7 +883,7 @@ function PublicPortal() {
             <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-3" />
             <h2 className="text-lg sm:text-xl font-bold text-slate-900">¡Cancha bloqueada!</h2>
             <p className="text-xs sm:text-sm text-slate-500 mt-1.5 mb-6">Tienes <strong>30 minutos</strong> para transferir a la Cuenta RUT 12.345.678-9.</p>
-            <a href={`https://wa.me/569XXXXXXXX?text=${encodeURIComponent(`⚽ Hola! Acabo de reservar en el portal.\n\n*Cancha:* ${selectedSlot.field}\n*Fecha:* ${selectedDate}\n*Horario:* ${selectedSlot.time}\n*A nombre de:* ${formData.name}\n\nAdjunto el comprobante.`)}`} target="_blank" rel="noreferrer" className="flex justify-center items-center gap-2 py-3.5 bg-emerald-500 text-white font-bold rounded-xl shadow-md transition hover:bg-emerald-600 text-sm">
+            <a href={`https://wa.me/56973764805?text=${encodeURIComponent(`⚽ Hola! Acabo de reservar en el portal.\n\n*Cancha:* ${selectedSlot.field}\n*Fecha:* ${selectedDate}\n*Horario:* ${selectedSlot.time}\n*A nombre de:* ${formData.name}\n\nAdjunto el comprobante.`)}`} target="_blank" rel="noreferrer" className="flex justify-center items-center gap-2 py-3.5 bg-emerald-500 text-white font-bold rounded-xl shadow-md transition hover:bg-emerald-600 text-sm">
               <Send className="w-4 h-4"/> Enviar Comprobante
             </a>
           </div>
