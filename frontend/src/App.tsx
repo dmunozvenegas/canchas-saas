@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Link, useNavigate, useLocation, Outlet } 
 import { 
   LayoutDashboard, CalendarDays, Users, LogOut, 
   Search, TrendingUp, Clock, Wallet, MapPin, Plus, AlertCircle, Send, CheckCircle2, 
-  Paperclip, Loader2, History, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Filter
+  Paperclip, Loader2, History, ChevronLeft, ChevronRight, Calendar as CalendarIcon
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
