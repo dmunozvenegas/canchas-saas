@@ -1,0 +1,17 @@
+# Dependencias
+node_modules/
+*/node_modules/
+
+# Variables de entorno y credenciales
+.env
+*/.env
+*.env.local
+
+# Builds de producción
+dist/
+build/
+*/dist/
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
