@@ -3,53 +3,92 @@ import { BrowserRouter, Routes, Route, Link, useNavigate, useLocation, Outlet } 
 import { 
   LayoutDashboard, CalendarDays, Users, LogOut, 
   Search, TrendingUp, Clock, Wallet, MapPin, Plus, AlertCircle, Send, CheckCircle2, 
-  Paperclip, Loader2, History, ChevronLeft, ChevronRight, Calendar as CalendarIcon
+  Paperclip, Loader2, History, ChevronLeft, ChevronRight, Calendar as CalendarIcon,
+  ArrowRight, ShieldCheck
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
 // Centralización de la API para local y Vercel
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
-// --- 1. VISTA: LOGIN ---
+// --- 1. VISTA: LOGIN (AMBIENTACIÓN DEPORTIVA & GLASSMORPHISM) ---
 function Login() {
   const navigate = useNavigate();
+
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row">
-      <div className="hidden lg:flex lg:w-1/2 bg-slate-900 text-white flex-col justify-between p-12 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 to-emerald-500/20" />
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-8">
-            <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center"><MapPin className="text-white w-5 h-5" /></div>
-            <span className="text-xl font-bold tracking-tight">CanchaSync SaaS</span>
-          </div>
-          <h1 className="text-4xl font-bold leading-tight mt-24">Gestiona tus canchas <br />sin topes de horario.</h1>
-        </div>
+    <div className="min-h-screen relative flex items-center justify-center p-4 sm:p-6 overflow-hidden">
+      {/* 1. Fondo fotográfico de cancha nocturna con degradado oscuro */}
+      <div 
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat -z-10 scale-105"
+        style={{
+          backgroundImage: `url('https://images.unsplash.com/photo-1529900748604-07564a03e7a6?auto=format&fit=crop&q=80&w=2000')`
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-tr from-slate-950/95 via-slate-900/85 to-indigo-950/80 backdrop-blur-[2px]" />
       </div>
-      <div className="w-full lg:w-1/2 flex items-center justify-center bg-white p-6 sm:p-12 min-h-screen">
-        <div className="w-full max-w-md space-y-8">
-          <div className="text-center lg:text-left">
-            <div className="flex lg:hidden items-center justify-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center"><MapPin className="text-white w-5 h-5" /></div>
-              <span className="text-xl font-bold tracking-tight text-slate-900">CanchaSync</span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Iniciar Sesión</h2>
+
+      {/* 2. Tarjeta Glassmorphic Centrada */}
+      <div className="w-full max-w-md bg-white/95 backdrop-blur-2xl rounded-3xl border border-white/40 shadow-2xl p-7 sm:p-9 relative z-10 animate-in fade-in zoom-in-95 duration-300">
+        {/* Cabecera / Identidad */}
+        <div className="text-center mb-7">
+          <div className="w-14 h-14 bg-indigo-600 rounded-2xl mx-auto flex items-center justify-center mb-3 shadow-lg shadow-indigo-600/30 ring-4 ring-indigo-50">
+            <MapPin className="text-white w-7 h-7" />
           </div>
-          <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); navigate('/dashboard'); }}>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Correo Electrónico</label>
-              <input type="email" className="w-full rounded-xl border-slate-200 border p-3 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" defaultValue="admin@losrobles.cl" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Contraseña</label>
-              <input type="password" className="w-full rounded-xl border-slate-200 border p-3 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" defaultValue="123456" />
-            </div>
-            <button type="submit" className="w-full py-3.5 px-4 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-sm">
-              Ingresar al Panel
-            </button>
-          </form>
-          <div className="text-center mt-4">
-            <Link to="/reservar" className="text-sm font-medium text-indigo-600 hover:underline">Ver portal público para jugadores</Link>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">CanchaSync SaaS</h1>
+          <p className="text-xs text-slate-500 mt-1 font-medium">Panel de Control para Recintos Deportivos</p>
+          
+          <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-200/70 rounded-full text-[11px] font-bold text-emerald-700">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            Recinto: Canchas Los Robles
           </div>
+        </div>
+
+        {/* Formulario */}
+        <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); navigate('/dashboard'); }}>
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
+              Correo Electrónico
+            </label>
+            <input 
+              type="email" 
+              required
+              className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-800 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 transition shadow-xs" 
+              defaultValue="admin@losrobles.cl" 
+            />
+          </div>
+
+          <div>
+            <div className="flex justify-between items-center mb-1.5">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Contraseña
+              </label>
+              <span className="text-[11px] text-slate-400 font-medium">Demo: 123456</span>
+            </div>
+            <input 
+              type="password" 
+              required
+              className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-800 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 transition shadow-xs" 
+              defaultValue="123456" 
+            />
+          </div>
+
+          <button 
+            type="submit" 
+            className="w-full mt-2 py-3.5 px-4 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2"
+          >
+            <ShieldCheck className="w-4 h-4" /> Entrar al Administrador
+          </button>
+        </form>
+
+        {/* Enlace al Portal Público */}
+        <div className="mt-6 pt-5 border-t border-slate-100 text-center">
+          <Link 
+            to="/reservar" 
+            className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition inline-flex items-center gap-1.5 group"
+          >
+            <span>Ver portal público de reservas</span>
+            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+          </Link>
         </div>
       </div>
     </div>
@@ -726,7 +765,7 @@ function ClientsView() {
   ); 
 }
 
-// --- 7. VISTA B2C: PORTAL PÚBLICO (TOTALMENTE TOUCH & MÓVIL) ---
+// --- 7. VISTA B2C: PORTAL PÚBLICO (AMBIENTADO CON ESTADIO Y GLASSMORPHISM) ---
 function PublicPortal() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
@@ -734,10 +773,21 @@ function PublicPortal() {
   const [formData, setFormData] = useState({ name: '', phone: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Generación de 7 días sin desfase UTC
   const weekDays = useMemo(() => {
     return Array.from({ length: 7 }).map((_, i) => {
-      const d = new Date(); d.setDate(d.getDate() + i);
-      return { dateStr: d.toISOString().split('T')[0], dayName: d.toLocaleDateString('es-CL', { weekday: 'short' }), dayNum: d.getDate() };
+      const d = new Date();
+      d.setDate(d.getDate() + i);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
+
+      return {
+        dateStr,
+        dayName: d.toLocaleDateString('es-CL', { weekday: 'short' }),
+        dayNum: d.getDate(),
+      };
     });
   }, []);
 
@@ -791,57 +841,110 @@ function PublicPortal() {
           status: 'Pendiente'
         }),
       });
-      refetch(); setStep(3);
-    } catch { alert('Error al agendar.'); } 
-    finally { setIsSubmitting(false); }
+      refetch();
+      setStep(3);
+    } catch {
+      alert('Error al agendar.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (loadingFields) {
-    return <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4"><Loader2 className="w-10 h-10 text-indigo-600 animate-spin" /><p className="mt-4 text-slate-500 font-medium text-sm">Cargando canchas...</p></div>;
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
+        <Loader2 className="w-10 h-10 text-emerald-400 animate-spin" />
+        <p className="mt-4 text-slate-300 font-medium text-sm">Cargando recinto...</p>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center py-8 sm:py-12 px-4">
-      <div className="max-w-xl w-full text-center mb-6 sm:mb-8">
-        <div className="w-12 h-12 sm:w-14 sm:h-14 bg-indigo-600 rounded-2xl mx-auto flex items-center justify-center mb-3 sm:mb-4 shadow-sm"><MapPin className="text-white w-6 h-6" /></div>
-        <h1 className="text-xl sm:text-2xl font-black text-slate-900">Canchas Los Robles</h1>
-        <p className="text-slate-500 text-xs sm:text-sm mt-0.5">Reserva tu cancha en línea</p>
+    <div className="min-h-screen relative flex flex-col items-center justify-center py-8 sm:py-14 px-4 overflow-x-hidden">
+      {/* 1. Fondo fotográfico con overlay de iluminación nocturna */}
+      <div 
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat -z-10 scale-105 transform transition duration-1000"
+        style={{
+          backgroundImage: `url('https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=2000')`
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/85 via-slate-900/75 to-slate-950/95 backdrop-blur-[1px]" />
       </div>
 
-      <div className="max-w-xl w-full bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden p-5 sm:p-8">
+      {/* 2. Cabecera con identidad visual */}
+      <div className="max-w-xl w-full text-center mb-6 sm:mb-8 relative z-10 animate-in fade-in slide-in-from-top-4 duration-500">
+        <div className="w-14 h-14 bg-indigo-600/90 backdrop-blur-md rounded-2xl mx-auto flex items-center justify-center mb-3 shadow-xl ring-4 ring-white/10">
+          <MapPin className="text-white w-7 h-7" />
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-md">
+          Canchas Los Robles
+        </h1>
+        <div className="flex items-center justify-center gap-2 mt-1.5">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <p className="text-slate-300 text-xs sm:text-sm font-medium">Reserva directa en línea</p>
+        </div>
+      </div>
+
+      {/* 3. Tarjeta Principal con efecto Glassmorphism */}
+      <div className="max-w-xl w-full bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 overflow-hidden p-5 sm:p-8 relative z-10 transition-all">
         {step === 1 && (
           <>
-            <h2 className="font-bold text-slate-800 text-sm sm:text-base mb-3 flex items-center gap-2">Selecciona un día</h2>
-            <div className="flex gap-2 overflow-x-auto pb-3 mb-4 scrollbar-hide">
+            <h2 className="font-bold text-slate-800 text-sm sm:text-base mb-3 flex items-center gap-2">
+              <CalendarIcon className="w-4 h-4 text-indigo-600" /> Selecciona un día
+            </h2>
+            <div className="flex gap-2 overflow-x-auto pb-3 mb-5 scrollbar-hide">
               {weekDays.map((day) => {
                 const isSelected = selectedDate === day.dateStr;
                 return (
-                  <button key={day.dateStr} onClick={() => { setSelectedDate(day.dateStr); setSelectedSlot(null); }} className={`min-w-[58px] sm:min-w-[64px] flex flex-col items-center p-2.5 sm:p-3 rounded-xl border transition ${isSelected ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-400'}`}>
-                    <span className="text-[11px] capitalize font-medium">{day.dayName}</span><span className="text-base sm:text-lg font-bold">{day.dayNum}</span>
+                  <button 
+                    key={day.dateStr} 
+                    onClick={() => { setSelectedDate(day.dateStr); setSelectedSlot(null); }} 
+                    className={`min-w-[58px] sm:min-w-[64px] flex flex-col items-center p-2.5 sm:p-3 rounded-2xl border transition duration-150 ${
+                      isSelected 
+                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/20' 
+                        : 'bg-white/80 text-slate-600 border-slate-200 hover:border-indigo-400 hover:bg-white'
+                    }`}
+                  >
+                    <span className="text-[11px] capitalize font-semibold">{day.dayName}</span>
+                    <span className="text-base sm:text-lg font-extrabold">{day.dayNum}</span>
                   </button>
                 );
               })}
             </div>
 
-            <h3 className="font-bold text-slate-800 text-sm mb-3 flex items-center gap-2"><Clock className="w-4 h-4 text-indigo-600" /> Horarios Disponibles</h3>
+            <h3 className="font-bold text-slate-800 text-sm mb-3 flex items-center gap-2">
+              <Clock className="w-4 h-4 text-indigo-600" /> Horarios Disponibles
+            </h3>
             
             {visibleSlots.length === 0 ? (
-               <div className="p-6 text-center text-slate-500 bg-slate-50 rounded-xl border border-dashed border-slate-300 text-sm">No hay canchas disponibles para esta fecha.</div>
+               <div className="p-8 text-center text-slate-500 bg-slate-50/70 rounded-2xl border border-dashed border-slate-300 text-sm">
+                 No hay canchas disponibles para esta fecha. Selecciona otro día.
+               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {dbFields.map((field: any) => {
                   const slotsForThisField = visibleSlots.filter(s => s.fieldId === field.id);
                   return (
-                    <div key={field.id} className="bg-slate-50/60 border border-slate-200 rounded-xl p-3.5">
-                      <h4 className="font-bold text-slate-800 text-xs sm:text-sm mb-3 text-center pb-2 border-b border-slate-200">{field.name}</h4>
+                    <div key={field.id} className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4">
+                      <h4 className="font-bold text-slate-800 text-xs sm:text-sm mb-3 text-center pb-2 border-b border-slate-200">
+                        {field.name}
+                      </h4>
                       {slotsForThisField.length === 0 ? (
-                        <p className="text-xs text-center text-slate-400 py-3">Sin horarios</p>
+                        <p className="text-xs text-center text-slate-400 py-4">Sin turnos libres</p>
                       ) : (
                         <div className="space-y-2">
                           {slotsForThisField.map(slot => (
-                            <button key={slot.id} onClick={() => { setSelectedSlot(slot); setStep(2); }} className="w-full flex justify-between items-center p-3 rounded-xl border border-slate-200 bg-white hover:border-indigo-600 hover:shadow-xs transition">
-                              <span className="font-bold text-slate-900 text-xs sm:text-sm">{slot.time}</span>
-                              <span className="font-bold text-indigo-600 text-xs sm:text-sm">${slot.price.toLocaleString('es-CL')}</span>
+                            <button 
+                              key={slot.id} 
+                              onClick={() => { setSelectedSlot(slot); setStep(2); }} 
+                              className="w-full flex justify-between items-center p-3 rounded-xl border border-slate-200 bg-white hover:border-indigo-600 hover:shadow-xs transition group"
+                            >
+                              <span className="font-bold text-slate-900 text-xs sm:text-sm group-hover:text-indigo-600 transition">
+                                {slot.time}
+                              </span>
+                              <span className="font-extrabold text-indigo-600 text-xs sm:text-sm">
+                                ${slot.price.toLocaleString('es-CL')}
+                              </span>
                             </button>
                           ))}
                         </div>
@@ -856,22 +959,42 @@ function PublicPortal() {
         
         {step === 2 && (
           <div className="max-w-md mx-auto">
-            <button onClick={() => setStep(1)} className="text-xs text-indigo-600 font-semibold mb-4 inline-block">← Volver a horarios</button>
-            <div className="p-4 bg-slate-50 rounded-xl mb-5 border border-slate-100">
+            <button onClick={() => setStep(1)} className="text-xs text-indigo-600 font-semibold mb-4 inline-block hover:underline">
+              ← Volver a horarios
+            </button>
+            <div className="p-4 bg-slate-50 rounded-2xl mb-5 border border-slate-200/80">
               <p className="font-bold text-slate-900 text-sm">{selectedSlot.field}</p>
-              <p className="text-xs sm:text-sm text-slate-700 mt-0.5">{selectedDate} • {selectedSlot.time}</p>
-              <p className="font-bold text-indigo-600 mt-2 text-base">${selectedSlot.price.toLocaleString('es-CL')}</p>
+              <p className="text-xs sm:text-sm text-slate-600 mt-0.5">{selectedDate} • {selectedSlot.time}</p>
+              <p className="font-extrabold text-indigo-600 mt-2 text-base">${selectedSlot.price.toLocaleString('es-CL')}</p>
             </div>
             <form onSubmit={handleBook} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">Nombre Completo</label>
-                <input type="text" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="Ej: Marcelo Díaz" className="w-full p-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-600" />
+                <input 
+                  type="text" 
+                  required 
+                  value={formData.name} 
+                  onChange={e => setFormData({...formData, name: e.target.value})} 
+                  placeholder="Ej: Marcelo Díaz" 
+                  className="w-full p-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-600 bg-white" 
+                />
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">WhatsApp de contacto</label>
-                <input type="text" required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="+56 9 1234 5678" className="w-full p-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-600" />
+                <input 
+                  type="text" 
+                  required 
+                  value={formData.phone} 
+                  onChange={e => setFormData({...formData, phone: e.target.value})} 
+                  placeholder="+56 9 1234 5678" 
+                  className="w-full p-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-600 bg-white" 
+                />
               </div>
-              <button type="submit" disabled={isSubmitting} className="w-full py-3.5 mt-2 bg-indigo-600 text-white text-sm font-bold rounded-xl disabled:opacity-50 transition shadow-sm">
+              <button 
+                type="submit" 
+                disabled={isSubmitting} 
+                className="w-full py-3.5 mt-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl disabled:opacity-50 transition shadow-md shadow-indigo-600/20"
+              >
                 {isSubmitting ? 'Procesando...' : 'Bloquear Cancha e ir a Pagar'}
               </button>
             </form>
@@ -882,8 +1005,15 @@ function PublicPortal() {
           <div className="text-center py-4 max-w-md mx-auto">
             <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-3" />
             <h2 className="text-lg sm:text-xl font-bold text-slate-900">¡Cancha bloqueada!</h2>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1.5 mb-6">Tienes <strong>30 minutos</strong> para transferir a la Cuenta RUT 12.345.678-9.</p>
-            <a href={`https://wa.me/56973764805?text=${encodeURIComponent(`⚽ Hola! Acabo de reservar en el portal.\n\n*Cancha:* ${selectedSlot.field}\n*Fecha:* ${selectedDate}\n*Horario:* ${selectedSlot.time}\n*A nombre de:* ${formData.name}\n\nAdjunto el comprobante.`)}`} target="_blank" rel="noreferrer" className="flex justify-center items-center gap-2 py-3.5 bg-emerald-500 text-white font-bold rounded-xl shadow-md transition hover:bg-emerald-600 text-sm">
+            <p className="text-xs sm:text-sm text-slate-500 mt-1.5 mb-6">
+              Tienes <strong>30 minutos</strong> para transferir a la Cuenta RUT 12.345.678-9.
+            </p>
+            <a 
+              href={`https://wa.me/56973764805?text=${encodeURIComponent(`⚽ Hola! Acabo de reservar en el portal.\n\n*Cancha:* ${selectedSlot.field}\n*Fecha:* ${selectedDate}\n*Horario:* ${selectedSlot.time}\n*A nombre de:* ${formData.name}\n\nAdjunto el comprobante.`)}`} 
+              target="_blank" 
+              rel="noreferrer" 
+              className="flex justify-center items-center gap-2 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-md shadow-emerald-500/20 transition text-sm"
+            >
               <Send className="w-4 h-4"/> Enviar Comprobante
             </a>
           </div>
