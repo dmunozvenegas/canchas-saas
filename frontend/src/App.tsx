@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Link, useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { 
   LayoutDashboard, CalendarDays, Users, LogOut, 
@@ -329,6 +329,51 @@ function DashboardHome() {
 }
 
 // --- 4. VISTA: AUDITORÍA & HISTORIAL RESPONSIVA ---
+// --- COMPONENTE TEMPORIZADOR EN VIVO (CUENTA REGRESIVA 30 MIN) ---
+function CountdownBadge({ createdAt }: { createdAt: string }) {
+  const [timeLeft, setTimeLeft] = useState<string>('');
+  const [isExpired, setIsExpired] = useState(false);
+
+  useEffect(() => {
+    const calculateTime = () => {
+      const createdTime = new Date(createdAt).getTime();
+      const expiresAt = createdTime + 30 * 60 * 1000; // Ventana de 30 minutos
+      const diff = expiresAt - Date.now();
+
+      if (diff <= 0) {
+        setTimeLeft('0m 00s');
+        setIsExpired(true);
+        return;
+      }
+
+      const minutes = Math.floor(diff / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      setTimeLeft(`${minutes}m ${seconds < 10 ? '0' : ''}${seconds}s`);
+      setIsExpired(false);
+    };
+
+    calculateTime();
+    const timer = setInterval(calculateTime, 1000);
+    return () => clearInterval(timer);
+  }, [createdAt]);
+
+  if (isExpired) {
+    return (
+      <span className="text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded-md flex items-center gap-1 w-fit animate-pulse">
+        ⚠️ Expirando (Liberando...)
+      </span>
+    );
+  }
+
+  return (
+    <span className="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-md flex items-center gap-1 w-fit font-mono">
+      <Clock className="w-3 h-3 text-amber-600 animate-spin" style={{ animationDuration: '6s' }} />
+      Libera en: {timeLeft}
+    </span>
+  );
+}
+
+// --- 4. VISTA: AUDITORÍA & HISTORIAL CON CONTEO REGRESIVO ---
 function AuditView() {
   const { data: dbFields = [] } = useQuery({
     queryKey: ['fields'],
@@ -336,6 +381,7 @@ function AuditView() {
   });
   const fieldsMap = dbFields.reduce((acc: any, f: any) => { acc[f.id] = f.name; return acc; }, {});
 
+  // refetchInterval: 10000 hace que el historial consulte al backend cada 10s en segundo plano
   const { data: historyData = [], isLoading } = useQuery({
     queryKey: ['history'],
     queryFn: async () => {
@@ -343,14 +389,34 @@ function AuditView() {
       if (!res.ok) throw new Error('Error al cargar historial');
       return res.json();
     },
+    refetchInterval: 10000,
   });
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, createdAt: string) => {
     switch(status) {
-      case 'Pagado': return <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 rounded-full text-[11px] font-bold flex items-center gap-1 w-fit"><CheckCircle2 className="w-3 h-3"/> Confirmado</span>;
-      case 'Pendiente': return <span className="px-2.5 py-0.5 bg-amber-100 text-amber-800 rounded-full text-[11px] font-bold flex items-center gap-1 w-fit"><Clock className="w-3 h-3"/> Pendiente</span>;
-      case 'Anulado': return <span className="px-2.5 py-0.5 bg-slate-100 text-slate-600 rounded-full text-[11px] font-bold w-fit">Anulado</span>;
-      default: return <span>{status}</span>;
+      case 'Pagado': 
+        return (
+          <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 rounded-full text-[11px] font-bold flex items-center gap-1 w-fit">
+            <CheckCircle2 className="w-3 h-3"/> Confirmado
+          </span>
+        );
+      case 'Pendiente': 
+        return (
+          <div className="flex flex-col gap-1">
+            <span className="px-2.5 py-0.5 bg-amber-100 text-amber-800 rounded-full text-[11px] font-bold flex items-center gap-1 w-fit">
+              <Clock className="w-3 h-3"/> Pendiente
+            </span>
+            <CountdownBadge createdAt={createdAt} />
+          </div>
+        );
+      case 'Anulado': 
+        return (
+          <span className="px-2.5 py-0.5 bg-slate-100 text-slate-600 rounded-full text-[11px] font-bold w-fit">
+            Anulado (Libre)
+          </span>
+        );
+      default: 
+        return <span>{status}</span>;
     }
   };
 
@@ -358,9 +424,15 @@ function AuditView() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div>
-        <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Auditoría de Reservas</h1>
-        <p className="text-slate-500 text-xs sm:text-sm mt-0.5">Historial inmutable de cancelaciones y pagos.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Auditoría de Reservas</h1>
+          <p className="text-slate-500 text-xs sm:text-sm mt-0.5">Historial inmutable de cancelaciones, pagos y tiempos de expiración.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-xs text-slate-400 font-medium">Sincronización en vivo</span>
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
@@ -370,7 +442,7 @@ function AuditView() {
               <tr>
                 <th className="p-3 sm:p-4 font-semibold">Cliente</th>
                 <th className="p-3 sm:p-4 font-semibold">Cancha y Horario</th>
-                <th className="p-3 sm:p-4 font-semibold">Estado</th>
+                <th className="p-3 sm:p-4 font-semibold">Estado y Tiempo Restante</th>
                 <th className="p-3 sm:p-4 font-semibold">Creación</th>
                 <th className="p-3 sm:p-4 font-semibold">Último Cambio</th>
               </tr>
@@ -389,11 +461,13 @@ function AuditView() {
                       <p className="font-semibold text-slate-900">{fieldsMap[record.fieldId] || 'Cancha'}</p>
                       <p className="text-xs text-slate-400">{record.date} • {record.timeSlot}</p>
                     </td>
-                    <td className="p-3 sm:p-4">{getStatusBadge(record.status)}</td>
-                    <td className="p-3 sm:p-4 text-slate-600 text-xs">{new Date(record.createdAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })} ({record.date})</td>
+                    <td className="p-3 sm:p-4">{getStatusBadge(record.status, record.createdAt)}</td>
+                    <td className="p-3 sm:p-4 text-slate-600 text-xs">
+                      {new Date(record.createdAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })} ({record.date})
+                    </td>
                     <td className="p-3 sm:p-4 text-slate-600 text-xs font-medium">
                       {new Date(record.updatedAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
-                      {record.status === 'Anulado' && <span className="block text-red-500 text-[10px]">Por Cronjob/Admin</span>}
+                      {record.status === 'Anulado' && <span className="block text-red-500 text-[10px]">Por Cronjob / Admin</span>}
                     </td>
                   </tr>
                 ))
