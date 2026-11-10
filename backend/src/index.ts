@@ -136,11 +136,19 @@ app.post('/api/bookings', async (req, res) => {
     }).returning();
 
     res.status(201).json(newBooking[0]);
-  } catch (error) {
+  } catch (error: any) {
+    // Revisamos el código exacto o si el mensaje de error de Postgres incluye la frase de restricción única
+    if (error.code === '23505' || (error.message && error.message.includes('duplicate key value'))) {
+      return res.status(409).json({ 
+        error: '¡Horario no disponible! Esta cancha acaba de ser reservada por otro jugador.' 
+      });
+    }
+    
     console.error('Error al registrar reserva:', error);
     res.status(500).json({ error: 'Error interno al procesar la reserva' });
   }
 });
+
 // Liquidar o registrar un abono adicional
 app.patch('/api/bookings/:id/pay', async (req, res) => {
   try {
